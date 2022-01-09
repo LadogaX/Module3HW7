@@ -10,6 +10,8 @@ namespace Module3HW7.Models
     {
         public string LogFolderPath { get; set; }
 
+        public string LogNameFile { get; set; }
+
         public string BackUpFolderPath { get; set; }
 
         public int CountRecordsFlushBackUp { get; set; }

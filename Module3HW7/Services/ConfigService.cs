@@ -56,6 +56,14 @@ namespace Module3HW7.Services
                     await SaveConfigAsync();
                 }
             });
+            await Task.Run(async () =>
+            {
+                if (Config.LogNameFile == null)
+                {
+                    Config.LogNameFile = "Log.txt";
+                    await SaveConfigAsync();
+                }
+            });
         }
 
         public async Task SaveConfigAsync()

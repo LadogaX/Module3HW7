@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace Module3HW7
         private static int _counter = 0;
         private readonly IFileService _fileService;
         private SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1);
+
         public Logger(IFileService fileService, IConfigService configService)
         {
             _configService = configService;
@@ -21,26 +23,23 @@ namespace Module3HW7
             _logs = new StringBuilder();
         }
 
-        public event Func<string, Task> EventBackUp;
+        public event Action<string> EventBackUp;
 
-        public async Task Log(LogType logType, string message)
+        public async Task Log(LogType logType, StreamWriter streamWriter, string message)
         {
             await _semaphoreSlim.WaitAsync();
             _counter++;
             var log = $"{DateTime.UtcNow}: {logType}: {message}";
             Console.WriteLine(log);
-            await _fileService.WriteAsync(log);
+            await _fileService.WriteAsync(streamWriter, log);
             _logs.AppendLine(log);
-            await ToBackUp();
-            _semaphoreSlim.Release();
-        }
 
-        public async Task ToBackUp()
-        {
             if (_counter % _configService.Config.CountRecordsFlushBackUp == 0)
             {
-                await EventBackUp?.Invoke(_logs.AppendLine("============================================").ToString());
+                EventBackUp?.Invoke(_logs.AppendLine("============================================").ToString());
             }
+
+            _semaphoreSlim.Release();
         }
     }
 }

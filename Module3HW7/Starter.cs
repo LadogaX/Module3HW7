@@ -12,40 +12,36 @@ namespace Module3HW7
 {
     public class Starter
     {
-        private TaskCompletionSource _tsc = new TaskCompletionSource();
-        private TaskCompletionSource _tsc2 = new TaskCompletionSource();
-        public Starter(ILogger logger)
+        private StreamWriter _streamWriter;
+        public Starter(ILogger logger, IBackUpService backUpService, IConfigService configService)
         {
             Logger = logger;
+            BackUpService = backUpService;
+            _streamWriter = new StreamWriter(Path.Combine(configService.Config.LogFolderPath, configService.Config.LogNameFile));
         }
 
         public ILogger Logger { get; }
-        public void Run()
+        public IBackUpService BackUpService { get; }
+
+        public async Task Run()
         {
-            Logger.EventBackUp += CreateBackUpAsync;
+            Logger.EventBackUp += BackUpService.CreateBackUpAsync;
 
-            Task.Run(async () => await LogGenerator(50, "Thread 1", _tsc));
-            Task.Run(async () => await LogGenerator(50, "Thread 2", _tsc2));
+            var task1 = Task.Run(async () => await LogGenerator(50, "Thread 1"));
+            var task2 = Task.Run(async () => await LogGenerator(50, "Thread 2"));
 
-            _tsc.Task.GetAwaiter().GetResult();
-            _tsc2.Task.GetAwaiter().GetResult();
+            await Task.WhenAll(task1, task2);
+            await _streamWriter.DisposeAsync();
         }
 
-        public async Task LogGenerator(int countLogs, string message, TaskCompletionSource tsc)
+        public async Task LogGenerator(int countLogs, string message)
         {
             var rnd = new Random();
 
             for (var i = 0; i < countLogs; i++)
             {
-                await Logger.Log((LogType)rnd.Next(3), $"{message}-{i}");
+                await Logger.Log((LogType)rnd.Next(3), _streamWriter, $"{message}-{i}");
             }
-
-            tsc.SetResult();
-        }
-
-        public async Task CreateBackUpAsync(string text)
-        {
-            await new BackUpService().CreateBackUpAsync(text);
         }
     }
 }

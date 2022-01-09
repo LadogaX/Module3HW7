@@ -1,14 +1,13 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Module3HW7.Services.Abstractions
 {
     public interface ILogger
     {
-        event Func<string, Task> EventBackUp;
+        event Action<string> EventBackUp;
 
-        Task Log(LogType logType, string message);
-
-        Task ToBackUp();
+        Task Log(LogType logType, StreamWriter streamWriter, string message);
     }
 }
